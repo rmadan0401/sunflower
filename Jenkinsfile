@@ -1,15 +1,17 @@
 pipeline {
-    agent any
-
-    environment {
-        GIT_REPO = 'https://github.com/rmadan0401/sunflower.git'
+    agent {
+        docker {
+            image 'androidsdk/android-30:latest'
+        }
     }
-
+    environment {
+        ANDROID_HOME = '/opt/android-sdk-linux'
+        GRADLE_USER_HOME = '.gradle'
+    }
     stages {
         stage('Clone') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: "${GIT_REPO}"]]])
+                git url: 'https://github.com/rmadan0401/sunflower.git', branch: 'main'
             }
         }
         stage('Build') {
