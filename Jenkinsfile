@@ -2,68 +2,71 @@ pipeline {
     agent any
 
     environment {
+        ANDROID_SDK_ROOT = "${WORKSPACE}/android-sdk"
         ANDROID_HOME = "${WORKSPACE}/android-sdk"
-        PATH = "${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/34.0.0:${PATH}"
+        CMDLINE_TOOLS = "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+        PATH = "${PATH}:${CMDLINE_TOOLS}/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools"
     }
 
     stages {
-        stage('Install Unzip') {
+        stage('Download Unzip') {
             steps {
-                echo "Installing Unzip manually..."
-                sh '''
-                    if ! command -v unzip >/dev/null 2>&1; then
+                script {
+                    if (!fileExists("${WORKSPACE}/unzip")) {
                         echo "Downloading Unzip..."
-                        wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
+                        sh '''
+                        wget https://github.com/rudix-mac/unzip/raw/master/unzip-6.0.tar.gz -O unzip.tar.gz || wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
                         tar -xzf unzip.tar.gz
                         cd unzip60
-                        make -f unix/Makefile generic
-                        cp unzip ${WORKSPACE}/unzip
-                        chmod +x ${WORKSPACE}/unzip
-                        echo "Unzip Installed"
-                    else
-                        echo "Unzip already installed"
-                    fi
-                '''
+                        chmod +x unix/unzipsfx
+                        mv unix/unzipsfx ${WORKSPACE}/unzip
+                        cd ..
+                        '''
+                    }
+                }
             }
         }
 
-        stage('Download Android CMDLINE Tools') {
+        stage('Download CMDLINE Tools') {
             steps {
+                script {
+                    if (!fileExists("${CMDLINE_TOOLS}")) {
+                        echo "Downloading CMDLINE Tools..."
+                        sh '''
+                        wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+                        ${WORKSPACE}/unzip cmdline-tools.zip
+                        mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools/latest
+                        mv cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Accept Licenses') {
+            steps {
+                echo "Accepting SDK Licenses..."
                 sh '''
-                    echo "Downloading Android CMDLINE Tools..."
-                    wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
-                    ${WORKSPACE}/unzip cmdline-tools.zip
-                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest
-                    mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest/
-                    echo "CMDLINE Tools Downloaded and Extracted"
+                yes | ${CMDLINE_TOOLS}/bin/sdkmanager --licenses || true
                 '''
             }
         }
 
-        stage('Install SDK and Accept Licenses') {
+        stage('Install SDK Packages') {
             steps {
+                echo "Installing SDK Packages..."
                 sh '''
-                    echo "Installing SDK and Accepting Licenses..."
-                    mkdir -p ${ANDROID_HOME}/licenses
-                    echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ${ANDROID_HOME}/licenses/android-sdk-license
-                    echo "84831b9409646a918e30573bab4c9c91346d8abd" > ${ANDROID_HOME}/licenses/android-sdk-preview-license
-                    sdkmanager --sdk_root=${ANDROID_HOME} "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+                ${CMDLINE_TOOLS}/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
                 '''
             }
         }
 
-        stage('Build APK') {
+        stage('Build App') {
             steps {
+                echo "Building App..."
                 sh '''
-                    echo "Building APK..."
-                    ./gradlew assembleDebug --no-daemon
+                ./gradlew assembleDebug --no-daemon
                 '''
-            }
-        }
-
-        stage('Archive APK') {
-            steps {
-                archiveArtifacts artifacts: '**/*.apk', fingerprint: true
             }
         }
     }
