@@ -1,14 +1,19 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "$WORKSPACE/gradle/wrapper/dists/gradle-*/bin:$PATH" // Gradle wrapper ka path set karna
-    }
-
     stages {
         stage('Clone') {
             steps {
                 git url: 'https://github.com/rmadan0401/sunflower.git', branch: 'main'
+            }
+        }
+
+        stage('Setup SDK Path') {
+            steps {
+                sh '''
+                echo "sdk.dir=/var/lib/jenkins/.android/sdk" > local.properties
+                mkdir -p /var/lib/jenkins/.android/sdk
+                '''
             }
         }
 
