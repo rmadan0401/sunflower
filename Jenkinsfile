@@ -30,7 +30,7 @@ pipeline {
                     yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
                     # Install required Android SDK components
-                    $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+                    $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
                 '''
             }
         }
