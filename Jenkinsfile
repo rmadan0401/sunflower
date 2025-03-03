@@ -1,28 +1,24 @@
 pipeline {
     agent any
-
     environment {
-        ANDROID_SDK_ROOT = "${WORKSPACE}/android-sdk"
         ANDROID_HOME = "${WORKSPACE}/android-sdk"
-        CMDLINE_TOOLS = "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
-        PATH = "${PATH}:${CMDLINE_TOOLS}/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools"
+        PATH = "${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/tools"
     }
 
     stages {
-        stage('Download Unzip') {
+        stage('Install Unzip') {
             steps {
                 script {
-                    if (!fileExists("${WORKSPACE}/unzip")) {
-                        echo "Downloading Unzip..."
-                        sh '''
-                        wget https://github.com/rudix-mac/unzip/raw/master/unzip-6.0.tar.gz -O unzip.tar.gz || wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
-                        tar -xzf unzip.tar.gz
-                        cd unzip60
-                        chmod +x unix/unzipsfx
-                        mv unix/unzipsfx ${WORKSPACE}/unzip
-                        cd ..
-                        '''
-                    }
+                    echo "Downloading Unzip..."
+                    sh '''
+                    wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
+                    tar -xzf unzip.tar.gz
+                    mkdir unzip60
+                    tar -xzf unzip.tar.gz -C unzip60
+                    cd unzip60
+                    chmod +x unix/unzip
+                    mv unix/unzip ${WORKSPACE}/unzip
+                    '''
                 }
             }
         }
@@ -30,15 +26,13 @@ pipeline {
         stage('Download CMDLINE Tools') {
             steps {
                 script {
-                    if (!fileExists("${CMDLINE_TOOLS}")) {
-                        echo "Downloading CMDLINE Tools..."
-                        sh '''
-                        wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
-                        ${WORKSPACE}/unzip cmdline-tools.zip
-                        mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools/latest
-                        mv cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest
-                        '''
-                    }
+                    echo "Downloading CMDLINE Tools..."
+                    sh '''
+                    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+                    ${WORKSPACE}/unzip cmdline-tools.zip
+                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest
+                    mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest
+                    '''
                 }
             }
         }
@@ -47,7 +41,7 @@ pipeline {
             steps {
                 echo "Accepting SDK Licenses..."
                 sh '''
-                yes | ${CMDLINE_TOOLS}/bin/sdkmanager --licenses || true
+                yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
                 '''
             }
         }
@@ -56,7 +50,7 @@ pipeline {
             steps {
                 echo "Installing SDK Packages..."
                 sh '''
-                ${CMDLINE_TOOLS}/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+                ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
                 '''
             }
         }
