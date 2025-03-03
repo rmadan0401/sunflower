@@ -11,13 +11,15 @@ pipeline {
                 script {
                     echo "Downloading Unzip..."
                     sh '''
-                    wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
-                    tar -xzf unzip.tar.gz
-                    mkdir unzip60
-                    tar -xzf unzip.tar.gz -C unzip60
-                    cd unzip60
-                    chmod +x unix/unzip
-                    mv unix/unzip ${WORKSPACE}/unzip
+                    if [ ! -f "${WORKSPACE}/unzip" ]; then
+                        wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
+                        mkdir -p unzip60
+                        tar -xzf unzip.tar.gz -C unzip60
+                        chmod +x unzip60/unzip
+                        mv unzip60/unzip ${WORKSPACE}/unzip
+                    else
+                        echo "Unzip Already Installed"
+                    fi
                     '''
                 }
             }
@@ -28,10 +30,14 @@ pipeline {
                 script {
                     echo "Downloading CMDLINE Tools..."
                     sh '''
-                    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
-                    ${WORKSPACE}/unzip cmdline-tools.zip
-                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest
-                    mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest
+                    if [ ! -d "${ANDROID_HOME}/cmdline-tools/latest" ]; then
+                        wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+                        ${WORKSPACE}/unzip cmdline-tools.zip
+                        mkdir -p ${ANDROID_HOME}/cmdline-tools/latest
+                        mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest
+                    else
+                        echo "CMDLINE Tools Already Installed"
+                    fi
                     '''
                 }
             }
@@ -39,19 +45,23 @@ pipeline {
 
         stage('Accept Licenses') {
             steps {
-                echo "Accepting SDK Licenses..."
-                sh '''
-                yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
-                '''
+                script {
+                    echo "Accepting SDK Licenses..."
+                    sh '''
+                    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+                    '''
+                }
             }
         }
 
         stage('Install SDK Packages') {
             steps {
-                echo "Installing SDK Packages..."
-                sh '''
-                ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-                '''
+                script {
+                    echo "Installing SDK Packages..."
+                    sh '''
+                    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+                    '''
+                }
             }
         }
 
