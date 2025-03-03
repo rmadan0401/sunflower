@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         ANDROID_HOME = '/home/ext_rmadan_vecv_in/android-sdk'
-        PATH = "$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+        GRADLE_HOME = '/home/ext_rmadan_vecv_in/gradle-8.2.1'
+        PATH = "$ANDROID_HOME/cmdline-tools/latest/bin:$GRADLE_HOME/bin:$PATH"
     }
 
     stages {
@@ -16,8 +17,9 @@ pipeline {
         stage('Set Up Environment') {
             steps {
                 sh '''
-                    export PATH=/path/to/gradle-8.2.1/bin:$PATH
                     export ANDROID_HOME=/home/ext_rmadan_vecv_in/android-sdk
+                    export GRADLE_HOME=/home/ext_rmadan_vecv_in/gradle-8.2.1
+                    export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$GRADLE_HOME/bin:$PATH
                     yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
                     $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
                 '''
