@@ -1,46 +1,58 @@
 pipeline {
     agent any
 
+    environment {
+        ANDROID_HOME = '/var/lib/jenkins/.android/sdk'
+        PATH = "$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH"
+    }
+
     stages {
-        stage('Clone') {
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/rmadan0401/sunflower.git', branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Setup SDK Path') {
+        stage('Install Android SDK + Accept Licenses') {
             steps {
                 sh '''
-                echo "sdk.dir=/var/lib/jenkins/.android/sdk" > local.properties
-                mkdir -p /var/lib/jenkins/.android/sdk
+                echo "Downloading CMDLINE Tools..."
+                mkdir -p $ANDROID_HOME/cmdline-tools/
+                cd $ANDROID_HOME/cmdline-tools/
+                wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+
+                echo "Extracting CMDLINE Tools..."
+                unzip commandlinetools-linux-10406996_latest.zip
+                mv cmdline-tools latest
+
+                echo "Accepting SDK Licenses..."
+                yes | sdkmanager --licenses || true
                 '''
             }
         }
 
-        stage('Accept SDK Licenses') {
+        stage('Gradle Build') {
             steps {
                 sh '''
-                yes | ./gradlew --no-daemon sdkmanager --licenses || true
+                echo "Building APK..."
+                ./gradlew clean assembleDebug --no-daemon
                 '''
             }
         }
 
-        stage('Dependencies') {
+        stage('Upload APK') {
             steps {
-                sh './gradlew dependencies'
+                archiveArtifacts artifacts: 'app/build/outputs/**/*.apk', fingerprint: true
             }
         }
+    }
 
-        stage('Build') {
-            steps {
-                sh './gradlew assembleDebug'
-            }
+    post {
+        success {
+            echo 'Build completed successfully!'
         }
-
-        stage('Publish APK') {
-            steps {
-                archiveArtifacts artifacts: '**/app/build/outputs/apk/debug/*.apk', fingerprint: true
-            }
+        failure {
+            echo 'Build failed!'
         }
     }
 }
