@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        ANDROID_HOME = '/var/lib/jenkins/.android/sdk'
-        PATH = "$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH"
+        ANDROID_SDK_ROOT = "/var/lib/jenkins/.android/sdk"
+        ANDROID_HOME = "/var/lib/jenkins/.android/sdk"
+        PATH = "$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/build-tools/34.0.0"
     }
 
     stages {
@@ -13,46 +14,40 @@ pipeline {
             }
         }
 
-        stage('Install Android SDK + Accept Licenses') {
+        stage('Install CMDLINE Tools & SDK') {
             steps {
                 sh '''
-                echo "Downloading CMDLINE Tools..."
-                mkdir -p $ANDROID_HOME/cmdline-tools/
-                cd $ANDROID_HOME/cmdline-tools/
-                wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-
-                echo "Extracting CMDLINE Tools..."
-                unzip commandlinetools-linux-10406996_latest.zip
-                mv cmdline-tools latest
-
-                echo "Accepting SDK Licenses..."
-                yes | sdkmanager --licenses || true
+                    echo "Downloading CMDLINE Tools..."
+                    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+                    echo "Extracting CMDLINE Tools..."
+                    tar -xf commandlinetools-linux-10406996_latest.zip
+                    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+                    mv cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/
+                    echo "Installing SDK Packages..."
+                    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
                 '''
             }
         }
 
-        stage('Gradle Build') {
+        stage('Accept SDK Licenses') {
             steps {
                 sh '''
-                echo "Building APK..."
-                ./gradlew clean assembleDebug --no-daemon
+                    echo "Accepting SDK Licenses..."
+                    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
                 '''
             }
         }
 
-        stage('Upload APK') {
+        stage('Build APK') {
             steps {
-                archiveArtifacts artifacts: 'app/build/outputs/**/*.apk', fingerprint: true
+                sh './gradlew assembleDebug'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Build completed successfully!'
-        }
-        failure {
-            echo 'Build failed!'
+        stage('Archive APK') {
+            steps {
+                archiveArtifacts artifacts: '**/*.apk', fingerprint: true
+            }
         }
     }
 }
