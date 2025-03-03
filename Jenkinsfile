@@ -12,10 +12,13 @@ pipeline {
                 echo "Installing Unzip manually..."
                 sh '''
                     if ! command -v unzip >/dev/null 2>&1; then
-                        wget https://github.com/rudix-mac/unzip/raw/master/unzip-6.0.tar.gz -O unzip.tar.gz
+                        echo "Downloading Unzip..."
+                        wget https://downloads.sourceforge.net/infozip/unzip60.tar.gz -O unzip.tar.gz
                         tar -xzf unzip.tar.gz
-                        chmod +x unzip*/unzip
-                        mv unzip*/unzip /usr/bin/unzip || mv unzip*/unzip ${WORKSPACE}/unzip
+                        cd unzip60
+                        make -f unix/Makefile generic
+                        cp unzip ${WORKSPACE}/unzip
+                        chmod +x ${WORKSPACE}/unzip
                         echo "Unzip Installed"
                     else
                         echo "Unzip already installed"
@@ -30,44 +33,38 @@ pipeline {
                     echo "Downloading Android CMDLINE Tools..."
                     wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
                     ${WORKSPACE}/unzip cmdline-tools.zip
-                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest/
+                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest
                     mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest/
-                    echo "CMDLINE Tools Installed"
+                    echo "CMDLINE Tools Downloaded and Extracted"
                 '''
             }
         }
 
-        stage('Accept SDK Licenses') {
+        stage('Install SDK and Accept Licenses') {
             steps {
                 sh '''
-                    echo "Accepting Licenses..."
-                    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+                    echo "Installing SDK and Accepting Licenses..."
+                    mkdir -p ${ANDROID_HOME}/licenses
+                    echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ${ANDROID_HOME}/licenses/android-sdk-license
+                    echo "84831b9409646a918e30573bab4c9c91346d8abd" > ${ANDROID_HOME}/licenses/android-sdk-preview-license
+                    sdkmanager --sdk_root=${ANDROID_HOME} "platforms;android-34" "build-tools;34.0.0" "platform-tools"
                 '''
             }
         }
 
-        stage('Install SDK Packages') {
+        stage('Build APK') {
             steps {
                 sh '''
-                    echo "Installing Android SDK Packages..."
-                    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-                '''
-            }
-        }
-
-        stage('Build App') {
-            steps {
-                sh '''
-                    chmod +x gradlew
+                    echo "Building APK..."
                     ./gradlew assembleDebug --no-daemon
                 '''
             }
         }
-    }
 
-    post {
-        always {
-            echo "💪 Android Pipeline Completed Boss!"
+        stage('Archive APK') {
+            steps {
+                archiveArtifacts artifacts: '**/*.apk', fingerprint: true
+            }
         }
     }
 }
