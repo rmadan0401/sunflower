@@ -1,17 +1,22 @@
 pipeline {
     agent {
         docker {
-            image 'androidsdk/android-30:latest'
+            image 'reactnativecommunity/react-native-android:latest' // Ye pura SDK wala image hai
         }
     }
     environment {
-        ANDROID_HOME = '/opt/android-sdk-linux'
-        GRADLE_USER_HOME = '.gradle'
+        ANDROID_HOME = '/root/android-sdk'
+        PATH = "$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$PATH"
     }
     stages {
         stage('Clone') {
             steps {
                 git url: 'https://github.com/rmadan0401/sunflower.git', branch: 'main'
+            }
+        }
+        stage('Dependencies') {
+            steps {
+                sh './gradlew dependencies'
             }
         }
         stage('Build') {
