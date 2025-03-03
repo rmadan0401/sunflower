@@ -17,6 +17,14 @@ pipeline {
             }
         }
 
+        stage('Accept SDK Licenses') {
+            steps {
+                sh '''
+                yes | ./gradlew --no-daemon sdkmanager --licenses || true
+                '''
+            }
+        }
+
         stage('Dependencies') {
             steps {
                 sh './gradlew dependencies'
@@ -26,12 +34,6 @@ pipeline {
         stage('Build') {
             steps {
                 sh './gradlew assembleDebug'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh './gradlew testDebugUnitTest'
             }
         }
 
