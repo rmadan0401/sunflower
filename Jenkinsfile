@@ -2,29 +2,37 @@ pipeline {
     agent any
 
     environment {
-        ANDROID_SDK_ROOT = "/var/lib/jenkins/.android/sdk"
-        ANDROID_HOME = "/var/lib/jenkins/.android/sdk"
-        PATH = "$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_SDK_ROOT/build-tools/34.0.0"
+        ANDROID_HOME = "${WORKSPACE}/android-sdk"
+        PATH = "${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/34.0.0:${PATH}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Install Unzip') {
             steps {
-                checkout scm
+                echo "Installing Unzip manually..."
+                sh '''
+                    if ! command -v unzip >/dev/null 2>&1; then
+                        wget https://github.com/rudix-mac/unzip/raw/master/unzip-6.0.tar.gz -O unzip.tar.gz
+                        tar -xzf unzip.tar.gz
+                        chmod +x unzip*/unzip
+                        mv unzip*/unzip /usr/bin/unzip || mv unzip*/unzip ${WORKSPACE}/unzip
+                        echo "Unzip Installed"
+                    else
+                        echo "Unzip already installed"
+                    fi
+                '''
             }
         }
 
-        stage('Install CMDLINE Tools & SDK') {
+        stage('Download Android CMDLINE Tools') {
             steps {
                 sh '''
-                    echo "Downloading CMDLINE Tools..."
-                    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
-                    echo "Extracting CMDLINE Tools..."
-                    tar -xf commandlinetools-linux-10406996_latest.zip
-                    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
-                    mv cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/
-                    echo "Installing SDK Packages..."
-                    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" || true
+                    echo "Downloading Android CMDLINE Tools..."
+                    wget -q https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+                    ${WORKSPACE}/unzip cmdline-tools.zip
+                    mkdir -p ${ANDROID_HOME}/cmdline-tools/latest/
+                    mv cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest/
+                    echo "CMDLINE Tools Installed"
                 '''
             }
         }
@@ -32,22 +40,34 @@ pipeline {
         stage('Accept SDK Licenses') {
             steps {
                 sh '''
-                    echo "Accepting SDK Licenses..."
-                    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+                    echo "Accepting Licenses..."
+                    yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
                 '''
             }
         }
 
-        stage('Build APK') {
+        stage('Install SDK Packages') {
             steps {
-                sh './gradlew assembleDebug'
+                sh '''
+                    echo "Installing Android SDK Packages..."
+                    ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+                '''
             }
         }
 
-        stage('Archive APK') {
+        stage('Build App') {
             steps {
-                archiveArtifacts artifacts: '**/*.apk', fingerprint: true
+                sh '''
+                    chmod +x gradlew
+                    ./gradlew assembleDebug --no-daemon
+                '''
             }
+        }
+    }
+
+    post {
+        always {
+            echo "💪 Android Pipeline Completed Boss!"
         }
     }
 }
