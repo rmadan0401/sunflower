@@ -22,6 +22,13 @@ plugins {
   alias(libs.plugins.compose.compiler)
 }
 
+play {
+    serviceAccountCredentials.set(file(System.getenv("PLAY_STORE_JSON_KEY") ?: "dummy.json"))
+    track.set(project.findProperty("playStoreTrack")?.toString() ?: "internal") // Default to "internal"
+    releaseName.set("My App Release")
+    update.set(true)
+}
+
 android {
   compileSdk = libs.versions.compileSdk.get().toInt()
 
