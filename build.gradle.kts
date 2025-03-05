@@ -22,6 +22,10 @@ buildscript {
 }
 
 plugins {
+    plugins 
+    id 'com.android.application'
+    id 'com.github.triplet.play' version '3.12.1' // Use the latest version
+
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.hilt) apply false
