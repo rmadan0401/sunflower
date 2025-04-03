@@ -21,15 +21,9 @@ buildscript {
     }
 }
 
-
-
-
 plugins {
-    plugins 
-    id("com.android.application")
+    id("com.android.application")  // ✅ Keep only one
     id("com.github.triplet.play") version "3.12.1"
-
-    alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.spotless)
@@ -41,3 +35,5 @@ plugins {
 }
 
 apply("${project.rootDir}/buildscripts/toml-updater-config.gradle")
+
+
