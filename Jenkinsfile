@@ -38,16 +38,20 @@ pipeline {
         // Verify the Gradle version being used
         stage('Check Gradle Version') {
             steps {
+                chmod +x ./gradlew
                 sh './gradlew --version'
             }
         }
 
         // Build the Android project
-        stage('Build') {
-            steps {
-                sh './gradlew assembleDebug'
-            }
-        }
+       stage('Build') {
+    steps {
+        sh '''
+            ./gradlew clean
+            ./gradlew assembleDebug
+        '''
+    }
+}
 
         // Run tests
         stage('Test') {
