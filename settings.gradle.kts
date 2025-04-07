@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // Optional but helpful
-
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
+  repositories {
+    gradlePluginPortal()
+    google()
+    mavenCentral()
+  }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
-    // ❌ Removed versionCatalogs.create("libs") { from(...) }
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+  }
 }
 
 include(":app")
