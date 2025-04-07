@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-rootProject.name = "poc" // Fixes the project name warning and compileSdk issue
-
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // Enables safe access to libs.versions.toml
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // Optional but helpful
 
 pluginManagement {
     repositories {
@@ -32,13 +30,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
-
-    versionCatalogs {
-        // ✅ Only call 'from(...)' ONCE
-        create("libs") {
-            from(files("gradle/libs.versions.toml"))
-        }
-    }
+    // ❌ Removed versionCatalogs.create("libs") { from(...) }
 }
 
 include(":app")
