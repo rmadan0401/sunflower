@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // ✅ Optional but helpful
+rootProject.name = "poc" // ✅ Sets the root project name to fix caching + compileSdk access
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // ✅ Optional but helpful with version catalog
 
 pluginManagement {
   repositories {
@@ -29,6 +31,12 @@ dependencyResolutionManagement {
   repositories {
     google()
     mavenCentral()
+  }
+
+  versionCatalogs {
+    create("libs") {
+      from(files("gradle/libs.versions.toml")) // ✅ Ensure this path is correct
+    }
   }
 }
 
