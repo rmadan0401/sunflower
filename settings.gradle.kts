@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
-rootProject.name = "poc" // ✅ Sets the root project name to fix caching + compileSdk access
+rootProject.name = "poc" // Fixes the project name warning and compileSdk issue
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // ✅ Optional but helpful with version catalog
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // Enables safe access to libs.versions.toml
 
 pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    google()
-    mavenCentral()
-  }
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
 }
 
 dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-  repositories {
-    google()
-    mavenCentral()
-  }
-
-  versionCatalogs {
-    create("libs") {
-      from(files("gradle/libs.versions.toml")) // ✅ Ensure this path is correct
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
     }
-  }
+
+    versionCatalogs {
+        // ✅ Only call 'from(...)' ONCE
+        create("libs") {
+            from(files("gradle/libs.versions.toml"))
+        }
+    }
 }
 
 include(":app")
