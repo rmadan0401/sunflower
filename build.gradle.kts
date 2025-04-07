@@ -1,8 +1,8 @@
 // Root build.gradle.kts
 
 plugins {
-    alias(libs.plugins.android.application)         // ✅ FROM version catalog
-    id("com.github.triplet.play") version "3.12.1"   // ✅ Manually declared with version
+    // Removed: alias(libs.plugins.android.application) ❌
+    id("com.github.triplet.play") version "3.12.1" // ✅ Custom plugin directly declared
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.spotless)
@@ -19,9 +19,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        
-        
+        // No buildscript dependencies needed here right now
     }
 }
 
+// If this file exists, keep it. It's likely configuring version catalog update rules.
 apply("${project.rootDir}/buildscripts/toml-updater-config.gradle")
