@@ -11,7 +11,7 @@ pipeline {
         // Clean the workspace to ensure a fresh build environment
         stage('Clean Workspace') {
             steps {
-                cleanWs() // Cleans the workspace
+                cleanWs()
             }
         }
 
@@ -35,28 +35,38 @@ pipeline {
             }
         }
 
+        // Make sure gradlew is executable
+        stage('Make gradlew Executable') {
+            steps {
+                sh 'chmod +x ./gradlew'
+            }
+        }
+
         // Verify the Gradle version being used
         stage('Check Gradle Version') {
             steps {
-                chmod +x ./gradlew
-                sh './gradlew --version'
+                sh "./gradlew --version"
+            }
+        }
+
+        // Clean build before assembling
+        stage('Gradle Clean') {
+            steps {
+                sh "./gradlew clean"
             }
         }
 
         // Build the Android project
-       stage('Build') {
-    steps {
-        sh '''
-            ./gradlew clean
-            ./gradlew assembleDebug
-        '''
-    }
-}
+        stage('Build') {
+            steps {
+                sh "./gradlew assembleDebug"
+            }
+        }
 
         // Run tests
         stage('Test') {
             steps {
-                sh './gradlew test'
+                sh "./gradlew test"
             }
         }
 
@@ -69,9 +79,8 @@ pipeline {
     }
 
     post {
-        // Clean up after the build
         always {
-            cleanWs() // Cleans the workspace after the build
+            cleanWs()
         }
     }
 }
