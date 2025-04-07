@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") // ✅ Optional but helpful
+
 pluginManagement {
   repositories {
     gradlePluginPortal()
